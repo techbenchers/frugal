@@ -2,58 +2,116 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <meta content="width=device-width, initial-scale=1" name="viewport"/>
+    <title>Techbenchers Blog</title>
     <script type="text/javascript" src="/webjars/jquery/jquery.min.js"></script>
     <script type="text/javascript" src="/webjars/js-cookie/js.cookie.js"></script>
+    <style>
+
+        * {
+            box-sizing: border-box !important;
+        }
+
+        body {
+            height: 100vh;
+            width: 100vw;
+            padding: 0;
+            margin: 0;
+        }
+
+        .container.unauthenticated {
+            display: flex;
+            width: 100%;
+            height: 100%;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container.unauthenticated div {
+            width: 20%;
+            height: 10%;
+            box-shadow: 0 2px 1px -1px rgba(0, 0, 0, .2), 0 1px 1px 0 rgba(0, 0, 0, .14), 0 1px 3px 0 rgba(0, 0, 0, .12);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 1rem;
+        }
+
+        button.login {
+            border: 0;
+            font-family: Roboto, Helvetica Neue, sans-serif;
+            font-weight: 500;
+            font-size: 1.3rem;
+            width: 100%;
+            padding: 0.5rem;
+            background: white;
+            border-radius: 4px;
+            box-shadow: 1px 1px 1px grey;
+            /*height: 3rem;*/
+            max-height: 100%;
+
+        }
+
+        img.google-icon {
+            height: 3rem;
+        }
+
+
+        }
+    </style>
 </head>
 <body>
-    <div class="container unauthenticated">
-        <div>
-            With Google: <a href="/oauth2/authorization/google">click here</a>
-        </div>
+<div class="container unauthenticated">
+    <div>
+        <button onClick="window.location.href += 'oauth2/authorization/google'" class="login">
+            <img class="google-icon" src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg"/>
+        </button>
     </div>
-    <div class="container authenticated" style="display:none">
-        Logged in as: <span id="user"></span>
-        <div>
-            <button onClick="logout()" class="btn btn-primary">Logout</button>
-        </div>
+</div>
+<div class="container authenticated" style="display:none">
+    Logged in as: <span id="user"></span>
+    <div>
+        <button onClick="logout()" class="btn btn-primary">Logout</button>
     </div>
+</div>
 <!--    <div class="container text-danger error"></div>-->
 
-    <script type="text/javascript">
-        $.get("/user", function(data) {
-            $("#user").html(data.user_name);
-            $(".unauthenticated").hide();
-            $(".authenticated").show();
-        });
-        var logout = function() {
-            $.post("/logout", function() {
-                $("#user").html('');
-                $(".unauthenticated").show();
-                $(".authenticated").hide();
-            });
-            return true;
-        };
-        $.ajaxSetup({
-            beforeSend : function(xhr, settings) {
-                if (settings.type == 'POST' || settings.type == 'PUT'
-                    || settings.type == 'DELETE') {
-                    if (!(/^http:.*/.test(settings.url) || /^https:.*/
-                        .test(settings.url))) {
-                        // Only send the token to relative URLs i.e. locally.
-                        xhr.setRequestHeader("X-XSRF-TOKEN",
-                            Cookies.get('XSRF-TOKEN'));
-                    }
-                }
-            }
-        });
-        // $.get("/error", function(data) {
-        //     if (data) {
-        //         $(".error").html(data);
-        //     } else {
-        //         $(".error").html('');
-        //     }
-        // });
-    </script>
+<script type="text/javascript">
+
+
+	$.get("/user", function(data) {
+		$("#user").html(data.user_name);
+		$(".unauthenticated").hide();
+		$(".authenticated").show();
+	});
+	var logout = function() {
+		$.post("/logout", function() {
+			$("#user").html('');
+			$(".unauthenticated").show();
+			$(".authenticated").hide();
+		});
+		return true;
+	};
+	$.ajaxSetup({
+		beforeSend: function(xhr, settings) {
+			if (settings.type == 'POST' || settings.type == 'PUT'
+				|| settings.type == 'DELETE') {
+				if (!(/^http:.*/.test(settings.url) || /^https:.*/
+					.test(settings.url))) {
+					// Only send the token to relative URLs i.e. locally.
+					xhr.setRequestHeader("X-XSRF-TOKEN",
+						Cookies.get('XSRF-TOKEN'));
+				}
+			}
+		}
+	});
+	// $.get("/error", function(data) {
+	//     if (data) {
+	//         $(".error").html(data);
+	//     } else {
+	//         $(".error").html('');
+	//     }
+	// });
+</script>
 </body>
 </html>
