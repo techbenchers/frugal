@@ -2,12 +2,14 @@ package com.techbenchers.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.techbenchers.database.UserRepository;
+import com.techbenchers.type.Constants;
 import com.techbenchers.type.User;
 import com.techbenchers.util.JsonUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.security.Principal;
+import java.util.Optional;
 
 @Component
 public class UserService {
@@ -24,8 +26,9 @@ public class UserService {
             user = new User();
             JsonNode jsonNode = getJsonObject(principal);
             setUserObject(jsonNode);
+            updateAdminStatus();
             updateUserDatabase();
-            System.out.println("User Logged in successfully.. Id: " + user.getId() + " Name: " + user.getName() + " Email: " + user.getEmail());
+            System.out.println("User Logged in successfully.. Id: " + user.getId() + " Email: " + user.getEmail() + " Admin: " + user.isAdmin());
             return user;
         } catch (Exception e) {
             System.out.println("Exception in processUserData: " + e.toString());
@@ -49,13 +52,23 @@ public class UserService {
 
     private void setUserObject(JsonNode jsonNode) throws Exception {
         try {
-            user.setName(jsonUtil.getFieldValue(jsonNode, "name"));
-            user.setEmail(jsonUtil.getFieldValue(jsonNode, "email"));
-            user.setId(jsonUtil.getFieldValue(jsonNode, "sub"));
+            user.setName(jsonUtil.getFieldValue(jsonNode, Constants.USER_NAME_KEY));
+            user.setEmail(jsonUtil.getFieldValue(jsonNode, Constants.USER_EMAIL_KEY));
+            setUserID(jsonNode, Constants.USER_ID_KEY_GOOGLE);
         } catch (Exception e) {
             System.out.println("Exception in setUserObject: " + e.toString());
         }
 
+    }
+
+    private void setUserID(JsonNode jsonNode, String idKey) {
+
+        try {
+            user.setId(jsonUtil.getFieldValue(jsonNode, idKey));
+        } catch (Exception e) {
+            System.out.println("Exception in setUserID: " + e.toString());
+            setUserID(jsonNode, Constants.USER_ID_KEY_GITHUB);
+        }
     }
 
     private void updateUserDatabase() {
@@ -65,4 +78,25 @@ public class UserService {
             System.out.println("Exception in updateUserDatabase: " + e.toString());
         }
     }
+
+    private void updateAdminStatus() {
+
+        try {
+            Optional<User> temp = userRepository.findById(user.getId());
+            if (temp.isPresent()) {
+                if (checkAdminStatus(temp.get())) {
+                    user.setAdmin(true);
+                }
+            } else {
+                user.setAdmin(false);
+            }
+        } catch (Exception e) {
+            System.out.println("Exception in updateAdminStatus: " + e.toString());
+        }
+    }
+
+    private boolean checkAdminStatus(User temp) {
+        return temp.isAdmin();
+    }
+
 }

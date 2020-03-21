@@ -2,6 +2,7 @@ package com.techbenchers.util;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.techbenchers.type.Constants;
 
 import java.io.IOException;
 import java.security.Principal;
@@ -32,7 +33,7 @@ public class JsonUtil {
 
     public String getFieldValue(JsonNode jsonNode, String field) throws Exception {
         try {
-            String fieldValue = jsonNode.get("authorities").get(0).get("attributes").get(field).asText();
+            String fieldValue = jsonNode.get(Constants.AUTHORITIES_KEY).get(0).get(Constants.ATTRIBUTES_KEY).get(field).asText();
             return fieldValue;
         } catch (Exception ex) {
             throw new Exception("Error in getFieldValue in extracting field : " + field + "\n" + ex.toString());

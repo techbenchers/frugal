@@ -10,6 +10,7 @@ public class User {
     private String id;
     private String name;
     private String email;
+    private boolean Admin;
 
     public String getId() {
         return id;
@@ -34,5 +35,14 @@ public class User {
     public void setEmail(String email) {
         this.email = email;
     }
+
+    public boolean isAdmin() {
+        return Admin;
+    }
+
+    public void setAdmin(boolean admin) {
+        Admin = admin;
+    }
+
 
 }

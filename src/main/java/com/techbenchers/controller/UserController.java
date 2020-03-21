@@ -25,7 +25,7 @@ public class UserController {
      * End Point which returns logged in user's information
      *
      * @param principal Object received after OAuth2 login
-     * @return          User object
+     * @return User object
      */
     @GetMapping("/getUserinfo")
     @ResponseBody
@@ -37,13 +37,11 @@ public class UserController {
     /**
      * End Point which returns user database
      *
-     * @return          List of Users
+     * @return List of Users
      */
-
     @GetMapping("/getAllUser")
     public List<User> getAllUsers() {
 
-        System.out.println("Inside getAll method");
         return userRepository.findAll();
     }
 
