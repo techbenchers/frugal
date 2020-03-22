@@ -2,7 +2,9 @@ package com.techbenchers.type;
 
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.stereotype.Component;
 
+@Component
 @Document
 public class User {
 
@@ -10,7 +12,7 @@ public class User {
     private String id;
     private String name;
     private String email;
-    private boolean Admin;
+    private boolean admin;
 
     public String getId() {
         return id;
@@ -37,11 +39,11 @@ public class User {
     }
 
     public boolean isAdmin() {
-        return Admin;
+        return admin;
     }
 
     public void setAdmin(boolean admin) {
-        Admin = admin;
+        this.admin = admin;
     }
 
 

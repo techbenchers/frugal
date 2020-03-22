@@ -20,7 +20,6 @@ public class UserController {
     @Autowired
     private UserService userService;
 
-
     /**
      * End Point which returns logged in user's information
      *
@@ -30,7 +29,6 @@ public class UserController {
     @GetMapping("/getUserinfo")
     @ResponseBody
     public User user(Principal principal) {
-
         return userService.processUserData(principal);
     }
 
@@ -41,7 +39,6 @@ public class UserController {
      */
     @GetMapping("/getAllUser")
     public List<User> getAllUsers() {
-
         return userRepository.findAll();
     }
 

@@ -8,6 +8,7 @@ import com.techbenchers.util.JsonUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import javax.validation.constraints.NotNull;
 import java.security.Principal;
 import java.util.Optional;
 
@@ -17,57 +18,67 @@ public class UserService {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
     private User user;
 
-    private JsonUtil jsonUtil = new JsonUtil();
-
-    public User processUserData(Principal principal) {
+    public User processUserData(@NotNull Principal principal) {
         try {
-            user = new User();
             JsonNode jsonNode = getJsonObject(principal);
             setUserObject(jsonNode);
             updateAdminStatus();
             updateUserDatabase();
-            System.out.println("User Logged in successfully.. Id: " + user.getId() + " Email: " + user.getEmail() + " Admin: " + user.isAdmin());
-            return user;
+            System.out.println("User Logged in successfully with Id: " + user.getId() + " Email: " + user.getEmail() + " Admin: " + user.isAdmin());
         } catch (Exception e) {
             System.out.println("Exception in processUserData: " + e.toString());
         }
-
-        return null;
+        return user;
     }
 
-    private JsonNode getJsonObject(Principal principal) throws Exception {
+    private JsonNode getJsonObject(@NotNull Principal principal) throws Exception {
         try {
-            String json = jsonUtil.objectToJsonString(principal);
-            return jsonUtil.jsonStringToJsonObject(json);
+            String json = JsonUtil.objectToJsonString(principal);
+            return JsonUtil.jsonStringToJsonObject(json);
 
         } catch (Exception e) {
             System.out.println("Exception in getJsonObject: " + e.toString());
             throw e;
         }
-
-
     }
 
-    private void setUserObject(JsonNode jsonNode) throws Exception {
+    private void setUserObject(@NotNull JsonNode jsonNode) throws Exception {
         try {
-            user.setName(jsonUtil.getFieldValue(jsonNode, Constants.USER_NAME_KEY));
-            user.setEmail(jsonUtil.getFieldValue(jsonNode, Constants.USER_EMAIL_KEY));
+            setUserName(jsonNode);
+            setUserEmail(jsonNode);
             setUserID(jsonNode, Constants.USER_ID_KEY_GOOGLE);
         } catch (Exception e) {
             System.out.println("Exception in setUserObject: " + e.toString());
+            throw e;
         }
 
     }
 
-    private void setUserID(JsonNode jsonNode, String idKey) {
+    private void setUserName(@NotNull JsonNode jsonNode) throws Exception {
+        user.setName(JsonUtil.getFieldValue(jsonNode, Constants.USER_NAME_KEY));
+    }
 
+    private void setUserEmail(JsonNode jsonNode) throws Exception {
+        user.setEmail(JsonUtil.getFieldValue(jsonNode, Constants.USER_EMAIL_KEY));
+    }
+
+    private void setUserID(@NotNull JsonNode jsonNode, @NotNull String idKey) {
         try {
-            user.setId(jsonUtil.getFieldValue(jsonNode, idKey));
+            user.setId(JsonUtil.getFieldValue(jsonNode, idKey));
         } catch (Exception e) {
             System.out.println("Exception in setUserID: " + e.toString());
-            setUserID(jsonNode, Constants.USER_ID_KEY_GITHUB);
+            setGitHubUserID(jsonNode, Constants.USER_ID_KEY_GITHUB);
+        }
+    }
+
+    private void setGitHubUserID(@NotNull JsonNode jsonNode, @NotNull String idKey) {
+        try {
+            user.setId(JsonUtil.getFieldValue(jsonNode, idKey));
+        } catch (Exception e) {
+            System.out.println("Exception in setGitHubUserID: " + e.toString());
         }
     }
 
@@ -80,11 +91,10 @@ public class UserService {
     }
 
     private void updateAdminStatus() {
-
         try {
-            Optional<User> temp = userRepository.findById(user.getId());
-            if (temp.isPresent()) {
-                if (checkAdminStatus(temp.get())) {
+            Optional<User> userFromDatabase = userRepository.findById(user.getId());
+            if (userFromDatabase.isPresent()) {
+                if (checkAdminStatus(userFromDatabase.get())) {
                     user.setAdmin(true);
                 }
             } else {
@@ -95,7 +105,7 @@ public class UserService {
         }
     }
 
-    private boolean checkAdminStatus(User temp) {
+    private boolean checkAdminStatus(@NotNull User temp) {
         return temp.isAdmin();
     }
 
