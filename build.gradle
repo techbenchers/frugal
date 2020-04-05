@@ -2,6 +2,7 @@ plugins {
     id 'org.springframework.boot' version '2.2.5.RELEASE'
     id 'io.spring.dependency-management' version '1.0.9.RELEASE'
     id 'java'
+    id 'org.siouan.frontend' version '1.4.1'
 }
 
 group = 'com'
@@ -30,4 +31,21 @@ dependencies {
 
 test {
     useJUnitPlatform()
+}
+
+frontend {
+    nodeVersion = '12.16.1'
+    assembleScript = 'run build'
+    packageJsonDirectory = file("../frugal-froontend")
+}
+
+tasks.register('processFrontendResources', Copy) {
+    description 'Process frontend resources'
+    from "../frugal-froontend/build"
+    into "./build/resources/main/static"
+    dependsOn tasks.named('assembleFrontend')
+}
+
+tasks.named('processResources').configure {
+    dependsOn tasks.named('processFrontendResources')
 }

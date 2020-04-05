@@ -42,4 +42,11 @@ public class UserController {
         return userRepository.findAll();
     }
 
+
+    @GetMapping("/removeAll")
+    public String removeAllUsersData() {
+        userRepository.deleteAll();
+        return "Removed All Users";
+    }
+
 }
