@@ -33,19 +33,19 @@ test {
     useJUnitPlatform()
 }
 
-frontend {
-    nodeVersion = '12.16.1'
-    assembleScript = 'run build'
-    packageJsonDirectory = file("../frugal-froontend")
-}
+//frontend {
+//    nodeVersion = '12.16.1'
+//    assembleScript = 'run build'
+//    packageJsonDirectory = file("../frugal-froontend")
+//}
 
-tasks.register('processFrontendResources', Copy) {
-    description 'Process frontend resources'
-    from "../frugal-froontend/build"
-    into "./build/resources/main/static"
-    dependsOn tasks.named('assembleFrontend')
-}
+//tasks.register('processFrontendResources', Copy) {
+//    description 'Process frontend resources'
+//    from "../frugal-froontend/build"
+//    into "./build/resources/main/static"
+//    dependsOn tasks.named('assembleFrontend')
+//}
 
-tasks.named('processResources').configure {
-    dependsOn tasks.named('processFrontendResources')
-}
+//tasks.named('processResources').configure {
+//    dependsOn tasks.named('processFrontendResources')
+//}

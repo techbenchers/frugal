@@ -1,52 +1,64 @@
 package com.techbenchers.controller;
 
-import com.techbenchers.database.UserRepository;
 import com.techbenchers.service.UserService;
 import com.techbenchers.type.User;
+
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.security.Principal;
 import java.util.List;
 
 @RestController
+@RequestMapping("/user")
 public class UserController {
 
-    @Autowired
-    private UserRepository userRepository;
+	@Autowired
+	private UserService userService;
 
-    @Autowired
-    private UserService userService;
+	/**
+	 * End Point which returns logged in user's information
+	 *
+	 * @param principal Object received after OAuth2 login
+	 * @return User object
+	 */
+	@GetMapping("/info")
+	public User user(Principal principal) {
+		try {
+//			if (userService.isUserPresent(principal))
+//				return userService.getUser();
+			return userService.processUserData(principal);
+		} catch (Exception e) {
+			throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage(), e);
+		}
+	}
 
-    /**
-     * End Point which returns logged in user's information
-     *
-     * @param principal Object received after OAuth2 login
-     * @return User object
-     */
-    @GetMapping("/getUserinfo")
-    @ResponseBody
-    public User user(Principal principal) {
-        return userService.processUserData(principal);
-    }
-
-    /**
-     * End Point which returns user database
-     *
-     * @return List of Users
-     */
-    @GetMapping("/getAllUser")
-    public List<User> getAllUsers() {
-        return userRepository.findAll();
-    }
+	/**
+	 * End Point which returns user database
+	 *
+	 * @return List of Users
+	 */
+	@GetMapping("/all")
+	public List<User> getAllUsers() {
+		try {
+			return userService.getAllUsers();
+		} catch (Exception e) {
+			throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage(), e);
+		}
+	}
 
 
-    @GetMapping("/removeAll")
-    public String removeAllUsersData() {
-        userRepository.deleteAll();
-        return "Removed All Users";
-    }
+	@GetMapping("/removeAll")
+	public String removeAllUsersData() {
+		try {
+			return userService.deleteAllUsers();
+		} catch (Exception e) {
+			throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage(), e);
+		}
+	}
 
 }
