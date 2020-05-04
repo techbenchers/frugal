@@ -9,6 +9,7 @@ import com.techbenchers.util.JsonUtil;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
 import javax.validation.constraints.NotNull;
 
@@ -16,6 +17,7 @@ import java.security.Principal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.ExecutionException;
 
 @Component
 public class UserService {
@@ -26,15 +28,25 @@ public class UserService {
 	@Autowired
 	private User user;
 
-//	public boolean isUserPresent(Principal principal) throws Exception {
-//		JsonNode jsonNode = getJsonObject(principal);
-//		String id = JsonUtil.getFieldValue(jsonNode, Constants.USER_ID_KEY_GITHUB)
-//		return user.getId() != null;
-//	}
-//
-//	public User getUser() {
-//		return user;
-//	}
+	public User isUserPresent(Principal principal) throws Exception {
+		try {
+			JsonNode jsonNode = getJsonObject(principal);
+			String id;
+			if (JsonUtil.hasField(jsonNode, Constants.USER_ID_KEY_GOOGLE)) {
+				id = JsonUtil.getFieldValue(jsonNode, Constants.USER_ID_KEY_GOOGLE);
+			} else {
+				id = JsonUtil.getFieldValue(jsonNode, Constants.USER_ID_KEY_GITHUB);
+			}
+			User tempUser = findUserByID(id);
+			if (tempUser != null)
+				user.copy(tempUser);
+			System.out.println("logged in user isUserPresent " + user.getId() + " " + user.getName());
+			return tempUser;
+		} catch (Exception e) {
+			System.out.println("Exception in isUserPresent " + e.toString());
+			throw e;
+		}
+	}
 
 	public User processUserData(@NotNull Principal principal) throws Exception {
 		try {
@@ -65,7 +77,7 @@ public class UserService {
 		try {
 			setUserName(jsonNode);
 			setUserEmail(jsonNode);
-			setUserID(jsonNode, Constants.USER_ID_KEY_GOOGLE);
+			setUserID(jsonNode);
 			setBlogIds();
 		} catch (Exception e) {
 			System.out.println("Exception in setUserObject: " + e.toString());
@@ -96,20 +108,15 @@ public class UserService {
 		user.setBlogIds(new ArrayList<>());
 	}
 
-	private void setUserID(@NotNull JsonNode jsonNode, @NotNull String idKey) {
+	private void setUserID(@NotNull JsonNode jsonNode) {
 		try {
-			user.setId(JsonUtil.getFieldValue(jsonNode, idKey));
+			if (JsonUtil.hasField(jsonNode, Constants.USER_ID_KEY_GOOGLE)) {
+				user.setId(JsonUtil.getFieldValue(jsonNode, Constants.USER_ID_KEY_GOOGLE));
+			} else {
+				user.setId(JsonUtil.getFieldValue(jsonNode, Constants.USER_ID_KEY_GITHUB));
+			}
 		} catch (Exception e) {
 			System.out.println("Exception in setUserID: " + e.toString());
-			setGitHubUserID(jsonNode, Constants.USER_ID_KEY_GITHUB);
-		}
-	}
-
-	private void setGitHubUserID(@NotNull JsonNode jsonNode, @NotNull String idKey) {
-		try {
-			user.setId(JsonUtil.getFieldValue(jsonNode, idKey));
-		} catch (Exception e) {
-			System.out.println("Exception in setGitHubUserID: " + e.toString());
 		}
 	}
 
@@ -124,9 +131,9 @@ public class UserService {
 
 	private void updateAdminStatus() throws Exception {
 		try {
-			Optional<User> userFromDatabase = userRepository.findById(user.getId());
-			if (userFromDatabase.isPresent()) {
-				if (checkAdminStatus(userFromDatabase.get())) {
+			User userFromDatabase = findUserByID(user.getId());
+			if (userFromDatabase != null) {
+				if (checkAdminStatus(userFromDatabase)) {
 					user.setAdmin(true);
 				}
 			} else {
@@ -145,8 +152,7 @@ public class UserService {
 	public void updateUserBlog(Blog blog) throws Exception {
 		try {
 			user.addBlogId(blog.getId());
-			userRepository.save(user);
-
+			updateUserDatabase();
 		} catch (Exception e) {
 			System.out.println("Exception in updateUserBlog " + e.toString());
 			throw e;
@@ -156,7 +162,7 @@ public class UserService {
 	public void deleteUserBlog(String id) throws Exception {
 		try {
 			user.removeBlogId(id);
-			userRepository.save(user);
+			updateUserDatabase();
 		} catch (Exception e) {
 			System.out.println("Exception is deleteUSerBlog " + e.toString());
 			throw e;
@@ -178,6 +184,42 @@ public class UserService {
 			return "Delted All Users";
 		} catch (Exception e) {
 			System.out.println("Exception in deleteAllUsers " + e.toString());
+			throw e;
+		}
+	}
+
+	public User findUserByID(String id) {
+		try {
+			return userRepository.findById(id).orElse(null);
+		} catch (Exception e) {
+			System.out.println("Exception in findUserByID " + e.toString());
+			throw e;
+		}
+	}
+
+	public boolean userHasBlog(String id) throws Exception {
+		try {
+			return user.getBlogIds().contains(id);
+		} catch (Exception e) {
+			System.out.println("Exception in userHasBlog " + e.toString());
+			throw e;
+		}
+	}
+
+	public boolean isLoggedInUser(String id) throws Exception {
+		try {
+			return id.equals(user.getId());
+		} catch (Exception e) {
+			System.out.println("Exception in isLoggedInUser " + e.toString());
+			throw e;
+		}
+	}
+
+	public List<String> getUserBlogIds(String userId) throws Exception {
+		try {
+			return findUserByID(userId).getBlogIds();
+		} catch (Exception e) {
+			System.out.println("Exception in getUserBlogIds " + e.toString());
 			throw e;
 		}
 	}

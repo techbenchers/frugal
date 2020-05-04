@@ -2,6 +2,7 @@ package com.techbenchers.type;
 
 import java.util.List;
 
+import javax.validation.constraints.Email;
 import javax.validation.constraints.NotNull;
 
 import org.springframework.data.annotation.Id;
@@ -15,6 +16,7 @@ public class User {
 	@Id
 	private String id;
 	private String name;
+	@Email
 	private String email;
 	private boolean admin;
 	private List<String> blogIds;
@@ -65,6 +67,14 @@ public class User {
 
 	public void removeBlogId(String id) {
 		this.blogIds.remove(id);
+	}
+
+	public void copy(User usr) {
+		this.id = usr.id;
+		this.name = usr.name;
+		this.email = usr.email;
+		this.admin = usr.admin;
+		this.blogIds = usr.blogIds;
 	}
 
 }

@@ -1,6 +1,10 @@
 package com.techbenchers.controller;
 
+import static com.techbenchers.util.ValidationUtil.Null;
+
 import java.util.List;
+
+import javax.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -36,8 +40,8 @@ public class BlogController {
 	@GetMapping("/user/{userId}")
 	public List<Blog> getUserBlogs(@PathVariable(value = "userId") String userId) {
 		try {
-			List<Blog> blogs = blogService.getUserBlogs(userId);
-			return blogs;
+			if (Null(userId)) throw new Exception("Invalid user ID");
+			return blogService.getUserBlogs(userService.getUserBlogIds(userId));
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage(), e);
@@ -49,14 +53,17 @@ public class BlogController {
 	 * @return Blog
 	 */
 	@PostMapping("/add")
-	public Blog addBlog(@RequestBody Blog blog) {
+	public Blog addBlog(@Valid @RequestBody Blog blog) {
 		try {
-			blogService.upsertBlog(blog);
+			if (Null(blog.getTitle()) || blog.getId() != null || !Null(blog.getUserId()) || !Null(blog.getCreatedAt()) || !Null(blog.getUpdatedAt()) || !Null(blog.getUri())) {
+				throw new Exception("Invalid request object");
+			}
+			blogService.addBlog(blog);
 			userService.updateUserBlog(blog);
 			return blog;
 		} catch (Exception e) {
 			e.printStackTrace();
-			throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage(), e);
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage(), e);
 		}
 	}
 
@@ -65,13 +72,19 @@ public class BlogController {
 	 * @return Updated Blog
 	 */
 	@PostMapping("/update")
-	public Blog upsertBlog(@RequestBody Blog blog) {
+	public Blog updateBlog(@RequestBody Blog blog) {
 		try {
-			blogService.upsertBlog(blog);
-			return blog;
+			if (Null(blog.getId(), blog.getUserId(), blog.getCreatedAt(), blog.getUpdatedAt(), blog.getUri()) || !userService.isLoggedInUser(blog.getUserId())) {
+				throw new Exception("Invalid request object");
+			}
+			if (userService.userHasBlog(blog.getId())) {
+				blogService.updateBlog(blog);
+				return blog;
+			}
+			throw new Exception("Invalid blog");
 		} catch (Exception e) {
 			e.printStackTrace();
-			throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage(), e);
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage(), e);
 		}
 	}
 
@@ -95,27 +108,34 @@ public class BlogController {
 	@GetMapping("/{id}")
 	public Blog getBlog(@PathVariable(value = "id") String id) {
 		try {
+			if(Null(id)) throw new Exception("Invalid blog ID");
 			return blogService.getBlogById(id);
 
 		} catch (Exception e) {
 			e.printStackTrace();
-			throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage(), e);
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage(), e);
 		}
 	}
 
 	/**
 	 * @param id id of blog
-	 * @return Message after successful deletion
+	 * @return Message after successful removal of  blog
 	 */
 	@DeleteMapping("/remove/{id}")
 	public String removeBlog(@PathVariable(value = "id") String id) {
 		try {
-			blogService.deleteBlogById(id);
-			userService.deleteUserBlog(id);
-			return "Deleted blog successfully";
+			if (Null(id)) {
+				throw new Exception("Invalid id");
+			}
+			if (userService.userHasBlog(id)) {
+				blogService.deleteBlogById(id);
+				userService.deleteUserBlog(id);
+				return "Deleted blog successfully";
+			}
+			throw new Exception("User doesn't have blog " + id);
 		} catch (Exception e) {
 			e.printStackTrace();
-			throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage(), e);
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage(), e);
 		}
 	}
 

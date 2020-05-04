@@ -13,6 +13,7 @@ import nonapi.io.github.classgraph.json.Id;
 public class Blog {
 	@Id
 	private String id;
+	@NotNull(message = "Title can not be null")
 	private String title;
 	private String uri;
 	private String body;

@@ -29,13 +29,17 @@ public class UserController {
 	@GetMapping("/info")
 	public User user(Principal principal) {
 		try {
-//			if (userService.isUserPresent(principal))
-//				return userService.getUser();
+			User user = userService.isUserPresent(principal);
+			if (user != null) {
+				return user;
+			}
 			return userService.processUserData(principal);
 		} catch (Exception e) {
 			throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage(), e);
 		}
 	}
+
+	// Todo: Remove below method
 
 	/**
 	 * End Point which returns user database
@@ -51,7 +55,11 @@ public class UserController {
 		}
 	}
 
+	// Todo: Remove below method
 
+	/**
+	 * @return Message after successful removal of all users
+	 */
 	@GetMapping("/removeAll")
 	public String removeAllUsersData() {
 		try {

@@ -1,5 +1,6 @@
 package com.techbenchers.service;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -13,6 +14,8 @@ import com.techbenchers.database.UserRepository;
 import com.techbenchers.type.Blog;
 import com.techbenchers.type.User;
 import com.techbenchers.util.UriUtil;
+import net.jcip.annotations.NotThreadSafe;
+
 
 @Component
 public class BlogService {
@@ -21,17 +24,67 @@ public class BlogService {
 	private BlogRepository blogRepository;
 
 	@Autowired
-	private UserRepository userRepository;
+	private UserService userService;
 
-	public Blog upsertBlog(@NotNull Blog blog) throws Exception {
+	@Autowired
+	private User user;
+
+	public void updateBlog(@NotNull Blog blog) throws Exception {
 		try {
-			blogRepository.save(blog);
+			upsertBlog(blog);
+		} catch (Exception e) {
+			System.out.println("Exception in updateBlog: " + e.toString());
+			throw e;
+		}
+	}
+
+	public void addBlog(@NotNull Blog blog) throws Exception {
+		try {
+			setCreatedAt(blog);
+			setUserID(blog);
+			updateBlogDatabase(blog);
+			upsertBlog(blog);
+		} catch (Exception e) {
+			System.out.println("Exception in addBlog: " + e.toString());
+			throw e;
+		}
+	}
+
+	private void upsertBlog(@NotNull Blog blog) throws Exception {
+		try {
+			System.out.println("logged in userID upsertBlog " + user.getId());
+			System.out.println("blog in upsertBlog " + blog.getId());
+			setUpdatedAt(blog);
 			setBlogUri(blog);
-			blogRepository.save(blog);
-			System.out.println("blog turi is " + blog.getUri());
-			return blog;
+			updateBlogDatabase(blog);
+			System.out.println("upserted blog is " + blog.toString());
 		} catch (Exception e) {
 			System.out.println("Exception in upsertBlog: " + e.toString());
+			throw e;
+		}
+	}
+
+	private void setCreatedAt(@NotNull Blog blog) {
+		blog.setCreatedAt(getCurrentTime());
+	}
+
+	private void setUpdatedAt(@NotNull Blog blog) {
+		blog.setUpdatedAt(getCurrentTime());
+	}
+
+	private void setUserID(@NotNull Blog blog) {
+		blog.setUserId(user.getId());
+	}
+
+	private String getCurrentTime() {
+		return Instant.now().toString();
+	}
+
+	private void updateBlogDatabase(@NotNull Blog blog) throws Exception {
+		try {
+			blogRepository.save(blog);
+		} catch (Exception e) {
+			System.out.println("Exception in updateBlogDatabase " + e.toString());
 			throw e;
 		}
 	}
@@ -46,13 +99,8 @@ public class BlogService {
 		}
 	}
 
-	public List<Blog> getUserBlogs(@NotNull String userId) throws Exception {
+	public List<Blog> getUserBlogs(List<String> blogIds) throws Exception {
 		try {
-			User user = userRepository.findById(userId).orElse(null);
-			if (user == null) {
-				throw new Exception("User not found");
-			}
-			List<String> blogIds = user.getBlogIds();
 			List<Blog> blogs = new ArrayList<Blog>();
 			for (String blogId : blogIds) {
 				blogRepository.findById(blogId).ifPresent(blogs::add);
